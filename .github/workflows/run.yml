@@ -1,0 +1,18 @@
+on:
+  schedule:
+    - cron: "0 */1 * * *" # every hour
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 'Checkout Repository'
+      uses: actions/checkout@v2
+
+    - name: Send notifications
+      env:
+        LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
+      run: |
+        bash water-cut-notify.sh
