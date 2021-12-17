@@ -3,8 +3,8 @@ version: '3.3'
 services:
   water-cut-notify:
     container_name: water-cut-notify
-    build: .
-    # image: 
+    # build: .
+    image: ghcr.io/kahnwong/water-cut-notify:latest
     environment:
       LINE_TOKEN: ${LINE_TOKEN}
       REGION: ${REGION}
