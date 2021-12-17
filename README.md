@@ -5,9 +5,6 @@
 Because ain't nobody got time to call a government call center.
 
 ## Usage
-I'm too lazy atm so:
-
-1. Fork the repo
-2. Replace the region name in `water-cut-notify.sh`
-3. (optional) you might want to inspect the JSON output in case you couldn't find your region. It pops up in a few attributes.
-4. Set `LINE_TOKEN` repo secrets.
+1. Rename `.env.sample` to `.env` and fill in variables.
+2. `docker-compose up`
+3. (or running locally) `source .env` && `bash water-cut-notify.sh`
