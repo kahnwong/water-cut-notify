@@ -1,0 +1,13 @@
+version: '3.3'
+
+services:
+  water-cut-notify:
+    container_name: water-cut-notify
+    build: .
+    # image: 
+    environment:
+      LINE_TOKEN: ${LINE_TOKEN}
+      REGION: ${REGION}
+      UPDATE_INTERVAL: 900 # 15 minutes
+      TZ: Asia/Bangkok
+    restart: unless-stopped
