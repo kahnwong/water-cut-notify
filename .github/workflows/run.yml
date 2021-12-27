@@ -12,7 +12,6 @@ jobs:
     - name: Send notifications
       env:
         LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
+        REGION: ${{ secrets.REGION }}
       run: |
-        sudo apt update
-        sudo apt install jq -y
         bash water-cut-notify.sh
