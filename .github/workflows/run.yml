@@ -1,17 +1,26 @@
+---
 on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
-  build:
+  send-alert:
     runs-on: ubuntu-latest
     steps:
-    - name: 'Checkout Repository'
-      uses: actions/checkout@v2
-    - name: Send notifications
-      env:
-        LINE_TOKEN: ${{ secrets.LINE_TOKEN }}
-        REGION: ${{ secrets.REGION }}
-      run: |
-        bash water-cut-notify.sh
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4.6.1
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install requirements
+        run: |
+          pip install -r requirements.txt
+      - name: Send notifications
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          LATITUDE: ${{ secrets.LATITUDE }}
+          LONGITUDE: ${{ secrets.LONGITUDE }}
+        run: |
+          python3 main.py
