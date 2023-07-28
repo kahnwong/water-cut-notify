@@ -22,7 +22,10 @@ def _fetch_data(latitude: float, longitude: float) -> Dict[str, Any]:
     url = f"https://mobile.mwa.co.th/api/mobile/no-water-running-area/latitude/{latitude}/longitude/{longitude}"
     r = requests.get(url, headers=headers).json()
 
-    return r[0]  # first response is closest to input coordinates (hopefully)
+    if r:
+        return r[0]  # first response is closest to input coordinates (hopefully)
+    else:
+        return None
 
 
 def _is_within_affected_area(
@@ -93,8 +96,9 @@ if __name__ == "__main__":
 
     r = _fetch_data(latitude=LATITUDE, longitude=LONGITUDE)
 
-    if _is_within_affected_area(latitude=LATITUDE, longitude=LONGITUDE, r=r):
-        message = _prepare_notification_message(r)
+    if r:
+        if _is_within_affected_area(latitude=LATITUDE, longitude=LONGITUDE, r=r):
+            message = _prepare_notification_message(r)
 
-        NTFY_TOPIC = os.getenv("NTFY_TOPIC")
-        _send_notification_message(message=message, ntfy_topic=NTFY_TOPIC)
+            NTFY_TOPIC = os.getenv("NTFY_TOPIC")
+            _send_notification_message(message=message, ntfy_topic=NTFY_TOPIC)
