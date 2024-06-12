@@ -4,7 +4,7 @@
 
 Because ain't nobody got time to call a government call center.
 
-## Usage
+## Usage (obsolete)
 
 1. Fork the repo
 2. Set repo secrets for `LATITUDE`, `LONGITUDE`, and required token to send the output to.
