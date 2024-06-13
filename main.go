@@ -7,7 +7,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const h3Resolution = 10
+const h3Resolution = 14
 
 type NoWaterRunningArea []struct {
 	AreaName       string   `json:"areaName"`
@@ -91,9 +90,10 @@ func main() {
 		fmt.Println("Loading env from env var instead...")
 	}
 
-	latitudeStr := os.Getenv("LATITUDE")
-	longitudeStr := os.Getenv("LONGITUDE")
-	latitude, longitude := parseEnv(latitudeStr, longitudeStr)
+	//latitudeStr := os.Getenv("LATITUDE")
+	//longitudeStr := os.Getenv("LONGITUDE")
+	//latitude, longitude := parseEnv(latitudeStr, longitudeStr)
+	latitude, longitude := parseEnv("13.7014488", "100.4811521")
 
 	// call api
 	r, err := getNoWaterRunningAreaData(latitude, longitude)
@@ -104,12 +104,43 @@ func main() {
 	// see whether your location got affected with no running water
 	targetPoint := h3.NewLatLng(latitude, longitude)
 	targetCell := h3.LatLngToCell(targetPoint, h3Resolution)
+	slog.Info(fmt.Sprintf("Target cell: %v", targetCell))
 
-	fmt.Println(targetCell)
+	for _, area := range r {
+		geoLoop := h3.GeoLoop{}
+		for _, coordinate := range area.Polygons[0].Coordinates {
+			// parse values
+			latitude, err := stringToFloat(coordinate.Latitude)
+			if err != nil {
+				fmt.Println("Error converting latitude to float:", err)
+			}
+			longitude, err := stringToFloat(coordinate.Longitude)
+			if err != nil {
+				fmt.Println("Error converting longitude to float:", err)
+			}
 
-	fmt.Println(r[0].AreaName)
+			// init geoLoop
+			geoLoop = append(geoLoop, h3.LatLng{Lat: latitude, Lng: longitude})
+		}
 
-	//for _, v := range r {
-	//	fmt.Println(v)
-	//}
+		compPolygon := h3.GeoPolygon{
+			GeoLoop: geoLoop,
+		}
+
+		compCells := h3.PolygonToCells(compPolygon, h3Resolution)
+
+	out:
+		for _, compCell := range compCells {
+			if targetCell == compCell {
+				slog.Info("Your area will be or affected with no running water")
+
+				fmt.Println(area.AreaName)
+				fmt.Println(area.Reason)
+				fmt.Println(area.StartDate)
+				fmt.Println(area.EndDate)
+
+				break out
+			}
+		}
+	}
 }
