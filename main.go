@@ -171,15 +171,19 @@ func main() {
 					area.AreaName, area.Reason, area.StartDate, area.EndDate)
 				slog.Info(outputMessage)
 
-				// send notification
-				res, err := sendNotificationNTFY(outputMessage, os.Getenv("NTFY_TOPIC"))
-				if err != nil {
-					fmt.Println("Error sending notification:", err)
-				}
-				defer res.Body.Close()
-
 				break out
 			}
 		}
+	}
+
+	// send notification
+	if outputMessage != "" {
+		res, err := sendNotificationNTFY(outputMessage, os.Getenv("NTFY_TOPIC"))
+		if err != nil {
+			fmt.Println("Error sending notification:", err)
+		}
+		defer res.Body.Close()
+	} else {
+		slog.Info("Your location is not affected with no running water.")
 	}
 }
