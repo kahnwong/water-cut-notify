@@ -1,18 +1,23 @@
-FROM golang:1.22 AS build-stage
+FROM golang:1.22-alpine AS build-stage
 
 WORKDIR /app
+
+# https://github.com/uber/h3/issues/354
+RUN apk add build-base
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY *.go ./
 
-RUN CGO_ENABLED=1 GOOS=linux go build -o /water-cut-notify
+RUN CGO_ENABLED=1 go build -o /water-cut-notify
 
-FROM gcr.io/distroless/base-debian11 AS build-release-stage
+FROM alpine:latest AS build-release-stage
 
 WORKDIR /
 
 COPY --from=build-stage /water-cut-notify /water-cut-notify
 
-ENTRYPOINT ["/USER nonroot:nonroot"]
+RUN chmod +x /water-cut-notify
+
+ENTRYPOINT ["/water-cut-notify"]

@@ -44,14 +44,13 @@ func stringToFloat(s string) (float64, error) {
 }
 
 // ----------------------- main -----------------------
-func getNoWaterRunningAreaData(latitude float64, longitude float64) (NoWaterRunningArea, error) {
+func getNoWaterRunningAreaData(latitude float64, longitude float64) (*http.Response, NoWaterRunningArea, error) {
 	// fetch data
 	url := fmt.Sprintf("https://mobile.mwa.co.th/api/mobile/no-water-running-area/latitude/%v/longitude/%v", latitude, longitude)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println("No response from request")
 	}
-	defer resp.Body.Close()
 
 	// parse response
 	body, err := io.ReadAll(resp.Body)
@@ -64,7 +63,7 @@ func getNoWaterRunningAreaData(latitude float64, longitude float64) (NoWaterRunn
 		log.Println("Can not unmarshal JSON")
 	}
 
-	return result, err
+	return resp, result, err
 }
 
 func createGeoLoop(coordinates []struct {
@@ -141,10 +140,11 @@ func main() {
 	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
 
 	// call api
-	r, err := getNoWaterRunningAreaData(latitude, longitude)
+	resp, r, err := getNoWaterRunningAreaData(latitude, longitude)
 	if err != nil {
 		fmt.Println("Error getting no water running area data:", err)
 	}
+	defer resp.Body.Close()
 
 	// see whether your location got affected with no running water
 	targetPoint := h3.NewLatLng(latitude, longitude)
