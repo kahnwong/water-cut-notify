@@ -122,9 +122,7 @@ func main() {
 		fmt.Println("Loading env from env var instead...")
 	}
 
-	//latitudeStr := os.Getenv("LATITUDE")
-	//longitudeStr := os.Getenv("LONGITUDE")
-	latitudeStr := "13.7014488"
+	latitudeStr := os.Getenv("LATITUDE")
 	latitude, err := stringToFloat(latitudeStr)
 	if err != nil {
 		fmt.Println("Error converting latitude to float:", err)
@@ -132,7 +130,7 @@ func main() {
 	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
 
 	//// longitude
-	longitudeStr := "100.4811521"
+	longitudeStr := os.Getenv("LONGITUDE")
 	longitude, err := stringToFloat(longitudeStr)
 	if err != nil {
 		fmt.Println("Error converting longitude to float:", err)
