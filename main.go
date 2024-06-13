@@ -7,6 +7,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -40,24 +41,6 @@ func stringToFloat(s string) (float64, error) {
 	}
 
 	return vInt, err
-}
-
-// ----------------------- parse env -----------------------
-func parseEnv(latitudeStr string, longitudeStr string) (float64, float64) {
-	//// latitude
-	latitude, err := stringToFloat(latitudeStr)
-	if err != nil {
-		fmt.Println("Error converting latitude to float:", err)
-	}
-	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
-
-	//// longitude
-	longitude, err := stringToFloat(longitudeStr)
-	if err != nil {
-		fmt.Println("Error converting longitude to float:", err)
-	}
-	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
-	return latitude, longitude
 }
 
 // ----------------------- main -----------------------
@@ -108,6 +91,31 @@ func createGeoLoop(coordinates []struct {
 	return geoLoop
 }
 
+func sendNotificationNTFY(outputMessage string, ntfyTopic string) (*http.Response, error) {
+	url := fmt.Sprintf("https://ntfy.sh/%s", ntfyTopic)
+	method := "POST"
+
+	payload := strings.NewReader(outputMessage)
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	slog.Info("Successfully sent a notification")
+
+	return res, err
+}
+
 func main() {
 	// init env
 	err := godotenv.Load()
@@ -117,8 +125,20 @@ func main() {
 
 	//latitudeStr := os.Getenv("LATITUDE")
 	//longitudeStr := os.Getenv("LONGITUDE")
-	//latitude, longitude := parseEnv(latitudeStr, longitudeStr)
-	latitude, longitude := parseEnv("13.7014488", "100.4811521")
+	latitudeStr := "13.7014488"
+	latitude, err := stringToFloat(latitudeStr)
+	if err != nil {
+		fmt.Println("Error converting latitude to float:", err)
+	}
+	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
+
+	//// longitude
+	longitudeStr := "100.4811521"
+	longitude, err := stringToFloat(longitudeStr)
+	if err != nil {
+		fmt.Println("Error converting longitude to float:", err)
+	}
+	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
 
 	// call api
 	r, err := getNoWaterRunningAreaData(latitude, longitude)
@@ -131,6 +151,7 @@ func main() {
 	targetCell := h3.LatLngToCell(targetPoint, h3Resolution)
 	slog.Info(fmt.Sprintf("Target cell: %v", targetCell))
 
+	var outputMessage string
 	for _, area := range r {
 		geoLoop := createGeoLoop(area.Polygons[0].Coordinates)
 		compPolygon := h3.GeoPolygon{
@@ -144,10 +165,20 @@ func main() {
 			if targetCell == compCell {
 				slog.Info("Your area will be or affected with no running water")
 
-				fmt.Println(area.AreaName)
-				fmt.Println(area.Reason)
-				fmt.Println(area.StartDate)
-				fmt.Println(area.EndDate)
+				outputMessage = fmt.Sprintf(
+					"area: %v\n"+
+						"reason: %v\n"+
+						"startDate: %v\n"+
+						"endDate: %v",
+					area.AreaName, area.Reason, area.StartDate, area.EndDate)
+				slog.Info(outputMessage)
+
+				// send notification
+				res, err := sendNotificationNTFY(outputMessage, os.Getenv("NTFY_TOPIC"))
+				if err != nil {
+					fmt.Println("Error sending notification:", err)
+				}
+				defer res.Body.Close()
 
 				break out
 			}
