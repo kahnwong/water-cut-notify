@@ -15,7 +15,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const h3Resolution = 14
+const h3Resolution = 10
 
 type NoWaterRunningArea []struct {
 	AreaName       string   `json:"areaName"`
@@ -32,7 +32,7 @@ type NoWaterRunningArea []struct {
 	} `json:"polygons"`
 }
 
-// ----------------------- parse env -----------------------
+// ----------------------- utils -----------------------
 func stringToFloat(s string) (float64, error) {
 	vInt, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 	if err != nil {
@@ -42,6 +42,7 @@ func stringToFloat(s string) (float64, error) {
 	return vInt, err
 }
 
+// ----------------------- parse env -----------------------
 func parseEnv(latitudeStr string, longitudeStr string) (float64, float64) {
 	//// latitude
 	latitude, err := stringToFloat(latitudeStr)
@@ -83,6 +84,30 @@ func getNoWaterRunningAreaData(latitude float64, longitude float64) (NoWaterRunn
 	return result, err
 }
 
+func createGeoLoop(coordinates []struct {
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
+}) h3.GeoLoop {
+	geoLoop := h3.GeoLoop{}
+
+	for _, coordinate := range coordinates {
+		// parse values
+		latitude, err := stringToFloat(coordinate.Latitude)
+		if err != nil {
+			fmt.Println("Error converting latitude to float:", err)
+		}
+		longitude, err := stringToFloat(coordinate.Longitude)
+		if err != nil {
+			fmt.Println("Error converting longitude to float:", err)
+		}
+
+		// init geoLoop
+		geoLoop = append(geoLoop, h3.LatLng{Lat: latitude, Lng: longitude})
+	}
+
+	return geoLoop
+}
+
 func main() {
 	// init env
 	err := godotenv.Load()
@@ -107,22 +132,7 @@ func main() {
 	slog.Info(fmt.Sprintf("Target cell: %v", targetCell))
 
 	for _, area := range r {
-		geoLoop := h3.GeoLoop{}
-		for _, coordinate := range area.Polygons[0].Coordinates {
-			// parse values
-			latitude, err := stringToFloat(coordinate.Latitude)
-			if err != nil {
-				fmt.Println("Error converting latitude to float:", err)
-			}
-			longitude, err := stringToFloat(coordinate.Longitude)
-			if err != nil {
-				fmt.Println("Error converting longitude to float:", err)
-			}
-
-			// init geoLoop
-			geoLoop = append(geoLoop, h3.LatLng{Lat: latitude, Lng: longitude})
-		}
-
+		geoLoop := createGeoLoop(area.Polygons[0].Coordinates)
 		compPolygon := h3.GeoPolygon{
 			GeoLoop: geoLoop,
 		}
