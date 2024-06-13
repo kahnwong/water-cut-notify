@@ -11,8 +11,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/uber/h3-go/v4"
+
 	"github.com/joho/godotenv"
 )
+
+const h3Resolution = 10
 
 type NoWaterRunningArea []struct {
 	AreaName       string   `json:"areaName"`
@@ -96,5 +100,16 @@ func main() {
 	if err != nil {
 		fmt.Println("Error getting no water running area data:", err)
 	}
+
+	// see whether your location got affected with no running water
+	targetPoint := h3.NewLatLng(latitude, longitude)
+	targetCell := h3.LatLngToCell(targetPoint, h3Resolution)
+
+	fmt.Println(targetCell)
+
 	fmt.Println(r[0].AreaName)
+
+	//for _, v := range r {
+	//	fmt.Println(v)
+	//}
 }
