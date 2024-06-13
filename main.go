@@ -29,6 +29,7 @@ type NoWaterRunningArea []struct {
 	} `json:"polygons"`
 }
 
+// ----------------------- parse env -----------------------
 func stringToFloat(s string) (float64, error) {
 	vInt, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 	if err != nil {
@@ -38,6 +39,24 @@ func stringToFloat(s string) (float64, error) {
 	return vInt, err
 }
 
+func parseEnv(latitudeStr string, longitudeStr string) (float64, float64) {
+	//// latitude
+	latitude, err := stringToFloat(latitudeStr)
+	if err != nil {
+		fmt.Println("Error converting latitude to float:", err)
+	}
+	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
+
+	//// longitude
+	longitude, err := stringToFloat(longitudeStr)
+	if err != nil {
+		fmt.Println("Error converting longitude to float:", err)
+	}
+	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
+	return latitude, longitude
+}
+
+// ----------------------- main -----------------------
 func getNoWaterRunningAreaData(latitude float64, longitude float64) (NoWaterRunningArea, error) {
 	// fetch data
 	url := fmt.Sprintf("https://mobile.mwa.co.th/api/mobile/no-water-running-area/latitude/%v/longitude/%v", latitude, longitude)
@@ -68,21 +87,9 @@ func main() {
 		fmt.Println("Loading env from env var instead...")
 	}
 
-	//// latitude
 	latitudeStr := os.Getenv("LATITUDE")
-	latitude, err := stringToFloat(latitudeStr)
-	if err != nil {
-		fmt.Println("Error converting latitude to float:", err)
-	}
-	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
-
-	//// longitude
 	longitudeStr := os.Getenv("LONGITUDE")
-	longitude, err := stringToFloat(longitudeStr)
-	if err != nil {
-		fmt.Println("Error converting longitude to float:", err)
-	}
-	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
+	latitude, longitude := parseEnv(latitudeStr, longitudeStr)
 
 	// call api
 	r, err := getNoWaterRunningAreaData(latitude, longitude)
@@ -90,5 +97,4 @@ func main() {
 		fmt.Println("Error getting no water running area data:", err)
 	}
 	fmt.Println(r[0].AreaName)
-
 }
