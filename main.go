@@ -66,10 +66,10 @@ func getNoWaterRunningAreaData(latitude float64, longitude float64) (*http.Respo
 	return resp, result, err
 }
 
-func createGeoLoop(coordinates []struct {
+func createPolygon(coordinates []struct {
 	Latitude  string `json:"latitude"`
 	Longitude string `json:"longitude"`
-}) h3.GeoLoop {
+}) h3.GeoPolygon {
 	geoLoop := h3.GeoLoop{}
 
 	for _, coordinate := range coordinates {
@@ -83,11 +83,13 @@ func createGeoLoop(coordinates []struct {
 			fmt.Println("Error converting longitude to float:", err)
 		}
 
-		// init geoLoop
+		// append to geometry object
 		geoLoop = append(geoLoop, h3.LatLng{Lat: latitude, Lng: longitude})
 	}
 
-	return geoLoop
+	return h3.GeoPolygon{
+		GeoLoop: geoLoop,
+	}
 }
 
 func sendNotificationNTFY(outputMessage string, ntfyTopic string) (*http.Response, error) {
@@ -151,11 +153,7 @@ func main() {
 
 	var outputMessage string
 	for _, area := range r {
-		geoLoop := createGeoLoop(area.Polygons[0].Coordinates)
-		compPolygon := h3.GeoPolygon{
-			GeoLoop: geoLoop,
-		}
-
+		compPolygon := createPolygon(area.Polygons[0].Coordinates)
 		compCells := h3.PolygonToCells(compPolygon, h3Resolution)
 
 	out:
