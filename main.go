@@ -92,25 +92,49 @@ func createPolygon(coordinates []struct {
 	}
 }
 
-func sendNotificationNTFY(outputMessage string, ntfyTopic string) (*http.Response, error) {
-	url := fmt.Sprintf("https://ntfy.sh/%s", ntfyTopic)
-	method := "POST"
+//func sendNotificationNTFY(outputMessage string, ntfyTopic string) (*http.Response, error) {
+//	url := fmt.Sprintf("https://ntfy.sh/%s", ntfyTopic)
+//	method := "POST"
+//	payload := strings.NewReader(outputMessage)
+//
+//	client := &http.Client{}
+//	req, err := http.NewRequest(method, url, payload)
+//
+//	if err != nil {
+//		fmt.Println(err)
+//		return nil, err
+//	}
+//
+//	res, err := client.Do(req)
+//	if err != nil {
+//		fmt.Println(err)
+//		return nil, err
+//	}
+//
+//	slog.Info("Successfully sent a notification")
+//
+//	return res, err
+//}
 
-	payload := strings.NewReader(outputMessage)
+func sendNotificationDiscord(outputMessage string, discordWebhookUrl string) (*http.Response, error) {
+	method := "POST"
+	payload := strings.NewReader(`{"content": "` + outputMessage + `"}`)
 
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
+	req, err := http.NewRequest(method, discordWebhookUrl, payload)
 
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
+	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	slog.Info("Successfully sent a notification")
 
@@ -176,7 +200,7 @@ func main() {
 
 	// send notification
 	if outputMessage != "" {
-		res, err := sendNotificationNTFY(outputMessage, os.Getenv("NTFY_TOPIC"))
+		res, err := sendNotificationDiscord(outputMessage, os.Getenv("DISCORD_WEBHOOK_URL"))
 		if err != nil {
 			fmt.Println("Error sending notification:", err)
 		}
