@@ -147,16 +147,17 @@ func main() {
 	if err != nil {
 		fmt.Println("Loading env from env var instead...")
 	}
-
 	latitudeStr := os.Getenv("LATITUDE")
+	longitudeStr := os.Getenv("LONGITUDE")
+	discordWebhookUrl := os.Getenv("DISCORD_WEBHOOK_URL")
+
+	// parse env
 	latitude, err := stringToFloat(latitudeStr)
 	if err != nil {
 		fmt.Println("Error converting latitude to float:", err)
 	}
 	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
 
-	//// longitude
-	longitudeStr := os.Getenv("LONGITUDE")
 	longitude, err := stringToFloat(longitudeStr)
 	if err != nil {
 		fmt.Println("Error converting longitude to float:", err)
@@ -200,7 +201,7 @@ func main() {
 
 	// send notification
 	if outputMessage != "" {
-		res, err := sendNotificationDiscord(outputMessage, os.Getenv("DISCORD_WEBHOOK_URL"))
+		res, err := sendNotificationDiscord(outputMessage, discordWebhookUrl)
 		if err != nil {
 			fmt.Println("Error sending notification:", err)
 		}
