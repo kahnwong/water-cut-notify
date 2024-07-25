@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN CGO_ENABLED=1 go build -o /water-cut-notify
+RUN CGO_ENABLED=1 go build -ldflags "-w -s" -o /water-cut-notify
 
 FROM alpine:latest AS build-release-stage
 
