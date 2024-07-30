@@ -13,7 +13,13 @@ import (
 
 	"github.com/uber/h3-go/v4"
 
-	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
+)
+
+var (
+	latitudeStr       = os.Getenv("LATITUDE")
+	longitudeStr      = os.Getenv("LONGITUDE")
+	discordWebhookUrl = os.Getenv("DISCORD_WEBHOOK_URL")
 )
 
 const h3Resolution = 10
@@ -142,15 +148,6 @@ func sendNotificationDiscord(outputMessage string, discordWebhookUrl string) (*h
 }
 
 func main() {
-	// init env
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Loading env from env var instead...")
-	}
-	latitudeStr := os.Getenv("LATITUDE")
-	longitudeStr := os.Getenv("LONGITUDE")
-	discordWebhookUrl := os.Getenv("DISCORD_WEBHOOK_URL")
-
 	// parse env
 	latitude, err := stringToFloat(latitudeStr)
 	if err != nil {
