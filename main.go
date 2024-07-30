@@ -14,10 +14,18 @@ import (
 var (
 	latitude          float64
 	longitude         float64
+	targetCell        h3.Cell
 	discordWebhookUrl = os.Getenv("DISCORD_WEBHOOK_URL")
 )
 
 const h3Resolution = 10
+
+type Area struct {
+	AreaName  string
+	Reason    string
+	StartDate string
+	EndDate   string
+}
 
 func stringToFloat(s string) float64 {
 	vInt, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
@@ -48,6 +56,36 @@ func createPolygon(coordinates []struct {
 	}
 }
 
+func isAreaAffected(r NoWaterRunningArea, targetCell h3.Cell) (bool, Area) {
+	var isAffected bool
+	var area Area
+
+out:
+	for _, i := range r {
+		compPolygon := createPolygon(i.Polygons[0].Coordinates)
+		compCells := h3.PolygonToCells(compPolygon, h3Resolution)
+
+		for _, compCell := range compCells {
+			if targetCell == compCell {
+				slog.Info("Your area will be or affected with no running water")
+				isAffected = true
+				area = Area{
+					AreaName:  i.AreaName,
+					Reason:    i.Reason,
+					StartDate: i.StartDate,
+					EndDate:   i.EndDate,
+				}
+
+				break out
+			} else {
+				isAffected = false
+			}
+		}
+	}
+
+	return isAffected, area
+}
+
 func init() {
 	// parse env
 	latitude := stringToFloat(os.Getenv("LATITUDE"))
@@ -55,6 +93,11 @@ func init() {
 
 	longitude := stringToFloat(os.Getenv("LONGITUDE"))
 	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
+
+	// calculate target h3 cell
+	targetPoint := h3.NewLatLng(latitude, longitude)
+	targetCell = h3.LatLngToCell(targetPoint, h3Resolution)
+	slog.Info(fmt.Sprintf("Target cell: %v", targetCell))
 }
 
 func main() {
@@ -62,31 +105,16 @@ func main() {
 	r := getNoWaterRunningArea(latitude, longitude)
 
 	// see whether your location got affected with no running water
-	targetPoint := h3.NewLatLng(latitude, longitude)
-	targetCell := h3.LatLngToCell(targetPoint, h3Resolution)
-	slog.Info(fmt.Sprintf("Target cell: %v", targetCell))
-
+	isAffected, area := isAreaAffected(r, targetCell)
 	var outputMessage string
-	for _, area := range r {
-		compPolygon := createPolygon(area.Polygons[0].Coordinates)
-		compCells := h3.PolygonToCells(compPolygon, h3Resolution)
-
-	out:
-		for _, compCell := range compCells {
-			if targetCell == compCell {
-				slog.Info("Your area will be or affected with no running water")
-
-				outputMessage = fmt.Sprintf(
-					"area: %v\n"+
-						"reason: %v\n"+
-						"startDate: %v\n"+
-						"endDate: %v",
-					area.AreaName, area.Reason, area.StartDate, area.EndDate)
-				slog.Info(outputMessage)
-
-				break out
-			}
-		}
+	if isAffected {
+		outputMessage = fmt.Sprintf(
+			"area: %v\n"+
+				"reason: %v\n"+
+				"startDate: %v\n"+
+				"endDate: %v",
+			area.AreaName, area.Reason, area.StartDate, area.EndDate)
+		slog.Info(outputMessage)
 	}
 
 	// send notification
