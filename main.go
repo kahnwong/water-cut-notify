@@ -79,24 +79,6 @@ func createPolygon(coordinates []struct {
 	}
 }
 
-func sendNotificationDiscord(discordWebhookUrl string, outputMessage string) error {
-	type discordWebhook struct {
-		Content string `json:"content"`
-	}
-	body := discordWebhook{
-		Content: outputMessage,
-	}
-
-	err := requests.
-		URL(discordWebhookUrl).
-		BodyJSON(&body).
-		Fetch(context.Background())
-
-	slog.Info("Successfully sent a notification")
-
-	return err
-}
-
 func main() {
 	// parse env
 	latitude := stringToFloat(latitudeStr)
@@ -141,7 +123,7 @@ func main() {
 
 	// send notification
 	if outputMessage != "" {
-		err := sendNotificationDiscord(discordWebhookUrl, outputMessage)
+		err := notify(discordWebhookUrl, outputMessage)
 		if err != nil {
 			fmt.Println("Error sending notification:", err)
 		}
