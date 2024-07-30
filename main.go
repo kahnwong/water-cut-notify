@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/uber/h3-go/v4"
-
+	"github.com/carlmjohnson/requests"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/uber/h3-go/v4"
 )
 
 var (
@@ -98,53 +99,22 @@ func createPolygon(coordinates []struct {
 	}
 }
 
-//func sendNotificationNTFY(outputMessage string, ntfyTopic string) (*http.Response, error) {
-//	url := fmt.Sprintf("https://ntfy.sh/%s", ntfyTopic)
-//	method := "POST"
-//	payload := strings.NewReader(outputMessage)
-//
-//	client := &http.Client{}
-//	req, err := http.NewRequest(method, url, payload)
-//
-//	if err != nil {
-//		fmt.Println(err)
-//		return nil, err
-//	}
-//
-//	res, err := client.Do(req)
-//	if err != nil {
-//		fmt.Println(err)
-//		return nil, err
-//	}
-//
-//	slog.Info("Successfully sent a notification")
-//
-//	return res, err
-//}
-
-func sendNotificationDiscord(outputMessage string, discordWebhookUrl string) (*http.Response, error) {
-	method := "POST"
-	payload := strings.NewReader(`{"content": "` + outputMessage + `"}`)
-
-	client := &http.Client{}
-	req, err := http.NewRequest(method, discordWebhookUrl, payload)
-
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+func sendNotificationDiscord(discordWebhookUrl string, outputMessage string) error {
+	type discordWebhook struct {
+		Content string `json:"content"`
 	}
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	body := discordWebhook{
+		Content: outputMessage,
 	}
-	defer res.Body.Close()
+
+	err := requests.
+		URL(discordWebhookUrl).
+		BodyJSON(&body).
+		Fetch(context.Background())
 
 	slog.Info("Successfully sent a notification")
 
-	return res, err
+	return err
 }
 
 func main() {
@@ -198,11 +168,10 @@ func main() {
 
 	// send notification
 	if outputMessage != "" {
-		res, err := sendNotificationDiscord(outputMessage, discordWebhookUrl)
+		err := sendNotificationDiscord(discordWebhookUrl, outputMessage)
 		if err != nil {
 			fmt.Println("Error sending notification:", err)
 		}
-		defer res.Body.Close()
 	} else {
 		slog.Info("Your location is not affected with no running water.")
 	}
