@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	latitudeStr       = os.Getenv("LATITUDE")
-	longitudeStr      = os.Getenv("LONGITUDE")
+	latitude          float64
+	longitude         float64
 	discordWebhookUrl = os.Getenv("DISCORD_WEBHOOK_URL")
 )
 
@@ -48,14 +48,16 @@ func createPolygon(coordinates []struct {
 	}
 }
 
-func main() {
+func init() {
 	// parse env
-	latitude := stringToFloat(latitudeStr)
+	latitude := stringToFloat(os.Getenv("LATITUDE"))
 	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
 
-	longitude := stringToFloat(longitudeStr)
+	longitude := stringToFloat(os.Getenv("LONGITUDE"))
 	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
+}
 
+func main() {
 	// check water
 	r := getNoWaterRunningArea(latitude, longitude)
 
