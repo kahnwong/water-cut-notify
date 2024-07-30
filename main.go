@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/carlmjohnson/requests"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/uber/h3-go/v4"
 )
@@ -21,22 +19,6 @@ var (
 
 const h3Resolution = 10
 
-type NoWaterRunningArea []struct {
-	AreaName       string   `json:"areaName"`
-	StartDate      string   `json:"startDate"`
-	EndDate        string   `json:"endDate"`
-	Soi            string   `json:"soi"`
-	Reason         string   `json:"reason"`
-	ImpactBranches []string `json:"impactBranches"`
-	Polygons       []struct {
-		Coordinates []struct {
-			Latitude  string `json:"latitude"`
-			Longitude string `json:"longitude"`
-		} `json:"coordinates"`
-	} `json:"polygons"`
-}
-
-// ----------------------- utils -----------------------
 func stringToFloat(s string) float64 {
 	vInt, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 	if err != nil {
@@ -44,19 +26,6 @@ func stringToFloat(s string) float64 {
 	}
 
 	return vInt
-}
-
-// ----------------------- main -----------------------
-func getNoWaterRunningAreaData(latitude float64, longitude float64) (NoWaterRunningArea, error) {
-	url := fmt.Sprintf("https://mobile.mwa.co.th/api/mobile/no-water-running-area/latitude/%v/longitude/%v", latitude, longitude)
-
-	var response NoWaterRunningArea
-	err := requests.
-		URL(url).
-		ToJSON(&response).
-		Fetch(context.Background())
-
-	return response, err
 }
 
 func createPolygon(coordinates []struct {
@@ -87,11 +56,8 @@ func main() {
 	longitude := stringToFloat(longitudeStr)
 	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
 
-	// call api
-	r, err := getNoWaterRunningAreaData(latitude, longitude)
-	if err != nil {
-		fmt.Println("Error getting no water running area data:", err)
-	}
+	// check water
+	r := getNoWaterRunningArea(latitude, longitude)
 
 	// see whether your location got affected with no running water
 	targetPoint := h3.NewLatLng(latitude, longitude)
