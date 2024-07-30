@@ -37,13 +37,13 @@ type NoWaterRunningArea []struct {
 }
 
 // ----------------------- utils -----------------------
-func stringToFloat(s string) (float64, error) {
+func stringToFloat(s string) float64 {
 	vInt, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 	if err != nil {
 		fmt.Println("Error converting string to int:", err)
 	}
 
-	return vInt, err
+	return vInt
 }
 
 // ----------------------- main -----------------------
@@ -67,14 +67,8 @@ func createPolygon(coordinates []struct {
 
 	for _, coordinate := range coordinates {
 		// parse values
-		latitude, err := stringToFloat(coordinate.Latitude)
-		if err != nil {
-			fmt.Println("Error converting latitude to float:", err)
-		}
-		longitude, err := stringToFloat(coordinate.Longitude)
-		if err != nil {
-			fmt.Println("Error converting longitude to float:", err)
-		}
+		latitude := stringToFloat(coordinate.Latitude)
+		longitude := stringToFloat(coordinate.Longitude)
 
 		// append to geometry object
 		geoLoop = append(geoLoop, h3.LatLng{Lat: latitude, Lng: longitude})
@@ -105,16 +99,10 @@ func sendNotificationDiscord(discordWebhookUrl string, outputMessage string) err
 
 func main() {
 	// parse env
-	latitude, err := stringToFloat(latitudeStr)
-	if err != nil {
-		fmt.Println("Error converting latitude to float:", err)
-	}
+	latitude := stringToFloat(latitudeStr)
 	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
 
-	longitude, err := stringToFloat(longitudeStr)
-	if err != nil {
-		fmt.Println("Error converting longitude to float:", err)
-	}
+	longitude := stringToFloat(longitudeStr)
 	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
 
 	// call api
