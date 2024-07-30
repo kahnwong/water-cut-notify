@@ -12,7 +12,7 @@ type discordWebhook struct {
 	Content string `json:"content"`
 }
 
-func notify(discordWebhookUrl string, outputMessage string) error {
+func notify(outputMessage string) error {
 
 	body := discordWebhook{
 		Content: outputMessage,

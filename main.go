@@ -89,7 +89,7 @@ func main() {
 
 	// send notification
 	if outputMessage != "" {
-		err := notify(discordWebhookUrl, outputMessage)
+		err := notify(outputMessage)
 		if err != nil {
 			fmt.Println("Error sending notification:", err)
 		}
