@@ -88,10 +88,10 @@ out:
 
 func init() {
 	// parse env
-	latitude := stringToFloat(os.Getenv("LATITUDE"))
+	latitude = stringToFloat(os.Getenv("LATITUDE"))
 	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
 
-	longitude := stringToFloat(os.Getenv("LONGITUDE"))
+	longitude = stringToFloat(os.Getenv("LONGITUDE"))
 	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
 
 	// calculate target h3 cell
