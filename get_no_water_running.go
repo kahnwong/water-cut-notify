@@ -23,8 +23,9 @@ type NoWaterRunningArea []struct {
 	} `json:"polygons"`
 }
 
-func getNoWaterRunningArea(latitude float64, longitude float64) NoWaterRunningArea {
+func getNoWaterRunningArea(latitude float64, longitude float64) (NoWaterRunningArea, error) {
 	url := fmt.Sprintf("https://mobile.mwa.co.th/api/mobile/no-water-running-area/latitude/%v/longitude/%v", latitude, longitude)
+	//fmt.Println(url)
 
 	var response NoWaterRunningArea
 	err := requests.
@@ -33,8 +34,8 @@ func getNoWaterRunningArea(latitude float64, longitude float64) NoWaterRunningAr
 		Fetch(context.Background())
 
 	if err != nil {
-		fmt.Println("Error getting no water running area data:", err)
+		return NoWaterRunningArea{}, err
+	} else {
+		return response, nil
 	}
-
-	return response
 }

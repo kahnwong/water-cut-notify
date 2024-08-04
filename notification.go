@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/carlmjohnson/requests"
 	_ "github.com/joho/godotenv/autoload"
@@ -22,8 +21,6 @@ func notify(outputMessage string) error {
 		URL(discordWebhookUrl).
 		BodyJSON(&body).
 		Fetch(context.Background())
-
-	slog.Info("Successfully sent a notification")
 
 	return err
 }

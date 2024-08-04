@@ -2,23 +2,23 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"strconv"
 	"strings"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/rs/zerolog/log"
 	"github.com/uber/h3-go/v4"
 )
 
+const h3Resolution = 10
+
 var (
-	latitude          float64
-	longitude         float64
+	targetLatitude    float64
+	targetLongitude   float64
 	targetCell        h3.Cell
 	discordWebhookUrl = os.Getenv("DISCORD_WEBHOOK_URL")
 )
-
-const h3Resolution = 10
 
 type Area struct {
 	AreaName  string
@@ -27,13 +27,13 @@ type Area struct {
 	EndDate   string
 }
 
-func stringToFloat(s string) float64 {
+func stringToFloat(s string) (float64, error) {
 	vInt, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 	if err != nil {
-		fmt.Println("Error converting string to int:", err)
+		return 0, err
+	} else {
+		return vInt, nil
 	}
-
-	return vInt
 }
 
 func createPolygon(coordinates []struct {
@@ -44,8 +44,14 @@ func createPolygon(coordinates []struct {
 
 	for _, coordinate := range coordinates {
 		// parse values
-		latitude := stringToFloat(coordinate.Latitude)
-		longitude := stringToFloat(coordinate.Longitude)
+		latitude, err := stringToFloat(coordinate.Latitude)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error converting latitude to float")
+		}
+		longitude, err := stringToFloat(coordinate.Longitude)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error converting longitude to float")
+		}
 
 		// append to geometry object
 		geoLoop = append(geoLoop, h3.LatLng{Lat: latitude, Lng: longitude})
@@ -67,7 +73,6 @@ out:
 
 		for _, compCell := range compCells {
 			if targetCell == compCell {
-				slog.Info("Your area will be or affected with no running water")
 				isAffected = true
 				area = Area{
 					AreaName:  i.AreaName,
@@ -88,21 +93,34 @@ out:
 
 func init() {
 	// parse env
-	latitude = stringToFloat(os.Getenv("LATITUDE"))
-	slog.Info(fmt.Sprintf("Latitude: %v", latitude))
+	var err error
 
-	longitude = stringToFloat(os.Getenv("LONGITUDE"))
-	slog.Info(fmt.Sprintf("Longitude: %v", longitude))
+	targetLatitude, err = stringToFloat(os.Getenv("TARGET_LATITUDE"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error converting TARGET_LATITUDE to float")
+	} else {
+		log.Info().Msgf("Latitude: %v", targetLatitude)
+	}
+
+	targetLongitude, err = stringToFloat(os.Getenv("TARGET_LONGITUDE"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error converting TARGET_LATITUDE to float")
+	} else {
+		log.Info().Msgf("Longitude: %v", targetLongitude)
+	}
 
 	// calculate target h3 cell
-	targetPoint := h3.NewLatLng(latitude, longitude)
+	targetPoint := h3.NewLatLng(targetLatitude, targetLongitude)
 	targetCell = h3.LatLngToCell(targetPoint, h3Resolution)
-	slog.Info(fmt.Sprintf("Target cell: %v", targetCell))
+	log.Info().Msgf("Target cell: %v", targetCell)
 }
 
 func main() {
 	// check water
-	r := getNoWaterRunningArea(latitude, longitude)
+	r, err := getNoWaterRunningArea(targetLatitude, targetLongitude)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error getting no water running area data")
+	}
 
 	// see whether your location got affected with no running water
 	isAffected, area := isAreaAffected(r, targetCell)
@@ -114,16 +132,16 @@ func main() {
 				"startDate: %v\n"+
 				"endDate: %v",
 			area.AreaName, area.Reason, area.StartDate, area.EndDate)
-		slog.Info(outputMessage)
+		log.Info().Msgf("Area affected: %v", outputMessage)
 	}
 
 	// send notification
 	if outputMessage != "" {
 		err := notify(outputMessage)
 		if err != nil {
-			fmt.Println("Error sending notification:", err)
+			log.Error().Err(err).Msg("Error sending notification")
 		}
 	} else {
-		slog.Info("Your location is not affected with no running water.")
+		log.Info().Msg("Your location is not affected with no running water.")
 	}
 }
