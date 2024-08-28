@@ -7,7 +7,7 @@ require github.com/joho/godotenv v1.5.1
 require (
 	github.com/carlmjohnson/requests v0.24.2
 	github.com/rs/zerolog v1.33.0
-	github.com/uber/h3-go/v4 v4.1.1
+	github.com/uber/h3-go/v4 v4.1.2
 )
 
 require (
