@@ -23,8 +23,9 @@ repos:
         args: [--mapping, "2", --sequence, "4", --offset, "2", --width, "150", --preserve-quotes]
         exclude: ^.github/dependabot.yaml
 #        exclude: (sops\.yaml)$
-  - repo: https://github.com/AleksaC/hadolint-py
-    rev: v2.12.1b3
+  # ----------------------- GOLANG -----------------------
+  - repo: https://github.com/kahnwong/pre-commit
+    rev: "3112305"
     hooks:
       - id: hadolint
         args:
@@ -34,10 +35,6 @@ repos:
           - DL3018
           - --ignore
           - DL3027
-  # ----------------------- GOLANG -----------------------
-  - repo: https://github.com/kahnwong/pre-commit
-    rev: "c6005a9"
-    hooks:
       - id: go-build
       - id: go-fmt
       - id: go-imports
