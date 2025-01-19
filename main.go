@@ -69,7 +69,10 @@ func isAreaAffected(r NoWaterRunningArea, targetCell h3.Cell) (bool, Area) {
 out:
 	for _, i := range r {
 		compPolygon := createPolygon(i.Polygons[0].Coordinates)
-		compCells := h3.PolygonToCells(compPolygon, h3Resolution)
+		compCells, err := h3.PolygonToCells(compPolygon, h3Resolution)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error converting polygon to cells")
+		}
 
 		for _, compCell := range compCells {
 			if targetCell == compCell {
@@ -111,7 +114,11 @@ func init() {
 
 	// calculate target h3 cell
 	targetPoint := h3.NewLatLng(targetLatitude, targetLongitude)
-	targetCell = h3.LatLngToCell(targetPoint, h3Resolution)
+	targetCell, err = h3.LatLngToCell(targetPoint, h3Resolution)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error converting target point to cell")
+	}
+
 	log.Info().Msgf("Target cell: %v", targetCell)
 }
 
