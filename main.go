@@ -46,11 +46,11 @@ func createPolygon(coordinates []struct {
 		// parse values
 		latitude, err := stringToFloat(coordinate.Latitude)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Error converting latitude to float")
+			log.Fatal().Msg("Error converting latitude to float")
 		}
 		longitude, err := stringToFloat(coordinate.Longitude)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Error converting longitude to float")
+			log.Fatal().Msg("Error converting longitude to float")
 		}
 
 		// append to geometry object
@@ -71,7 +71,7 @@ out:
 		compPolygon := createPolygon(i.Polygons[0].Coordinates)
 		compCells, err := h3.PolygonToCells(compPolygon, h3Resolution)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Error converting polygon to cells")
+			log.Fatal().Msg("Error converting polygon to cells")
 		}
 
 		for _, compCell := range compCells {
@@ -100,14 +100,14 @@ func init() {
 
 	targetLatitude, err = stringToFloat(os.Getenv("TARGET_LATITUDE"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error converting TARGET_LATITUDE to float")
+		log.Fatal().Msg("Error converting TARGET_LATITUDE to float")
 	} else {
 		log.Info().Msgf("Latitude: %v", targetLatitude)
 	}
 
 	targetLongitude, err = stringToFloat(os.Getenv("TARGET_LONGITUDE"))
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error converting TARGET_LATITUDE to float")
+		log.Fatal().Msg("Error converting TARGET_LONGITUDE to float")
 	} else {
 		log.Info().Msgf("Longitude: %v", targetLongitude)
 	}
@@ -116,7 +116,7 @@ func init() {
 	targetPoint := h3.NewLatLng(targetLatitude, targetLongitude)
 	targetCell, err = h3.LatLngToCell(targetPoint, h3Resolution)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error converting target point to cell")
+		log.Fatal().Msg("Error converting target point to cell")
 	}
 
 	log.Info().Msgf("Target cell: %v", targetCell)
@@ -126,7 +126,7 @@ func main() {
 	// check water
 	r, err := getNoWaterRunningArea(targetLatitude, targetLongitude)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Error getting no water running area data")
+		log.Fatal().Msg("Error getting no water running area data")
 	}
 
 	// see whether your location got affected with no running water
@@ -146,7 +146,7 @@ func main() {
 	if outputMessage != "" {
 		err := notify(outputMessage)
 		if err != nil {
-			log.Error().Err(err).Msg("Error sending notification")
+			log.Error().Msg("Error sending notification")
 		}
 	} else {
 		log.Info().Msg("Your location is not affected with no running water.")
